@@ -1,0 +1,2 @@
+file,state,source,prerelaxed,converged,d_residues,clashes,Q_cg,Q_prerelaxed,ca_rmsd_vs_cg_nm,check_min_converged,check_min_d_residues,check_min_d_list,msm_macrostate,cg_traj,cg_frame,cg_time_ns
+state7.pdb,7,state7_run1_frame17828_noH.pdb,state7_prerelaxed_noH.pdb,True,0,0,0.959,0.9651,0.069,True,0,,6,1,17828,1337.43

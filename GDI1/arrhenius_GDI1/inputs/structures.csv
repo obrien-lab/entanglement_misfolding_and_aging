@@ -1,0 +1,7 @@
+file,state,source,prerelaxed,converged,d_residues,clashes,Q_cg,Q_prerelaxed,ca_rmsd_vs_cg_nm,check_min_converged,check_min_d_residues,check_min_d_list
+state1.pdb,1,state1_run11_frame17338_noH.pdb,state1_prerelaxed_noH.pdb,True,0,0,0.56,0.5577,0.0791,True,0,
+state2.pdb,2,state2_run24_frame7640_noH.pdb,state2_prerelaxed_noH.pdb,True,0,0,0.651,0.6558,0.0772,True,0,
+state3.pdb,3,state3_run20_frame17394_noH.pdb,state3_prerelaxed_noH.pdb,True,0,0,0.856,0.8562,0.0737,True,0,
+state4.pdb,4,state4_run2_frame17629_noH.pdb,state4_prerelaxed_noH.pdb,True,0,0,0.946,0.939,0.0713,True,0,
+state5.pdb,5,state5_run0_frame17766_noH.pdb,state5_prerelaxed_noH.pdb,True,0,0,0.946,0.9434,0.0749,True,0,
+state6.pdb,6,state6_native_noH.pdb,state6_prerelaxed_noH.pdb,True,0,0,1.0,1.0,0.0418,True,0,

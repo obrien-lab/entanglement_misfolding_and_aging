@@ -1,0 +1,104 @@
+# GDI1 temperature-jump simulations: every setting in one place.
+# Source: ../TJUMP_PROTOCOL.md, with decisions confirmed during setup.
+
+paths:
+  inputs: inputs                         # state1.pdb ... state6.pdb (heavy atoms, native atom order)
+  native_contacts: config/native_contacts_GQ.npz   # GQ.py contact list + native CA-CA distances (Angstrom)
+  native_reference: /storage/home/qzv5006/group/Research_data/Aging_project/cg_sim_300K/sc_ent/14_P39958/template/setup/P39958_clean.pdb
+  gq_py: /storage/group/epo2/default/qzv5006/Research_data/Aging_cognitive_project/src/Step7_prepare_cg_simulation/src/GQ.py
+
+structures:                              # state 6 = native reference; states 1-5 and 7 = back-mapped CG frames
+  1: {file: state1.pdb, Q_cg: 0.560}
+  2: {file: state2.pdb, Q_cg: 0.651}
+  3: {file: state3.pdb, Q_cg: 0.856}
+  4: {file: state4.pdb, Q_cg: 0.946}
+  5: {file: state5.pdb, Q_cg: 0.946}
+  6: {file: state6.pdb, Q_cg: 1.000}
+  # state 7 added 2026-09-23 (user decision): representative of MSM macrostate 6, the native-like basin
+  # of the CG ensemble (traj 1, frame 17828), prepared by backmap/add_state7.py. It is the CG counterpart
+  # of the native reference in state 6. Run at 650-800 K only; no 600 K (user decision 2026-09-23).
+  7: {file: state7.pdb, Q_cg: 0.959}
+
+software:
+  openmm: "8.5.2"                        # conda env topo-prod
+  platform: CUDA
+  precision: mixed
+  gpu: any                               # --gres=gpu:1 without type
+
+system:
+  forcefield: [amber14-all.xml, amber14/tip3p.xml]   # ff14SB
+  water_model: tip3p
+  protonation: {pH: 7.0, HIS: HIE, CYS: CYS}         # identical for all six
+  disulfides: none                       # SG-SG bonds removed before adding hydrogens
+  box: {shape: dodecahedron, width_nm: 16.0}         # fixed, identical for all six (boxVectors)
+  salt: {positive_ion: K+, negative_ion: Cl-, ionic_strength_M: 0.15, neutralize: true}
+  nonbonded: {method: PME, cutoff_nm: 1.0}
+  constraints: HBonds
+  hydrogen_mass_repartitioning: false
+
+restraint:
+  atoms: CA
+  k_kJ_mol_nm2: 1000.0
+  form: "0.5*k*periodicdistance(x,y,z,x0,y0,z0)^2"   # reference = input CA positions
+
+minimisation:
+  tolerance_kJ_mol_nm: 10.0              # RMS force
+  max_iterations: 0                      # run to convergence
+  restraint: true
+  checks: {energy_finite_negative: true, max_force_kJ_mol_nm: 1000.0, Q_unchanged: true}
+
+integrator:
+  type: LangevinMiddleIntegrator
+  timestep_fs: 2.0
+  friction_per_ps: 1.0
+
+equilibration:
+  nvt: {temperature_K: 300, length_ns: 2.0, restraint: true}
+  npt: {temperature_K: 300, pressure_bar: 1.0, length_ns: 2.0, restraint: true,
+        barostat: MonteCarloBarostat, barostat_frequency_steps: 25}
+  post_check: record_Q
+
+production:
+  temperatures_K: [800, 750, 725, 700, 675, 650, 600]   # 725 and 675 added 2026-09-14 (extra Eq. 11 points); backups params.yaml.bak_20260914 (original), params.yaml.bak_20260914_pre675
+  ensemble: NVT                          # box volume from the end of NPT
+  replicas: 50
+  restraint: false
+  velocities: regenerate_at_target_T
+  seed_formula: "state*1000000 + T*100 + rep"
+  stability_test: {temperature_K: 800, fallback_timestep_fs: 1.0}
+  unfolding: {Q_threshold: 0.3, check_interval_ps: 100, stop_at_first_check_below: true}
+  first_passage_time: "earlier of first saved frame with Q < 0.3 and the stopping check"
+  cap_ns: 20.0
+  cap_extension: {rule: "native first; if < 50% of native replicas unfold by the cap at a T, double the cap at that T",
+                  same_cap_all_states: true}
+  output:
+    trajectory: {format: xtc, atoms: protein, interval_ps: 10}
+    checkpoint: {interval_ns: 1.0, overwrite: true}
+    log_interval_ps: 100
+
+order_parameter:
+  Q: {definition: GQ.py, scaling: 1.2, periodic: false}   # real distances within the protein, as in GQ.py
+
+analysis:
+  # Everything in this section is applied only when analysing result.json files.
+  # It can be changed at any time without re-running simulations.
+  survival_fit: {equation: "S(t)=1 for t<t0; exp(-k(t-t0)) for t>=t0", fit_range: "t <= cap", capped_replicas: survive}
+  k_app: "1/(t0 + 1/k)"
+  # Primary model for the reported extrapolation is the LINEAR Arrhenius fit (user decision 2026-09-23):
+  #   ln k_app = b/T + c,  Ea = -b*R.  The super-Arrhenius Eq. 11 is still fitted and reported alongside it
+  #   for comparison; both come from the same bootstrap resamples (analysis/arrhenius_partial.py).
+  #   Reason: extrapolating a quadratic in 1/T from 650-800 K to 300 K is badly conditioned - the Eq. 11
+  #   bootstrap CIs span many orders of magnitude and do not bracket their own point estimates, while the
+  #   linear fit gives CIs within a factor of ~2-3.
+  arrhenius: "ln k_app = b/T + c"                     # primary (linear)
+  arrhenius_super: "ln k_app = a/T^2 + b/T + c"       # Eq. 11, reported for comparison
+  bootstrap: {iterations: 10000, resample: 50, discard_R2_below: 0.9}
+  target_temperature_K: 300
+  bootstrap_keeps_capped_replicas: true
+  min_unfolded_per_temperature: 10         # of 50
+  min_usable_temperatures: 4
+  report_discarded_bootstrap_fraction: true
+
+qc:
+  periodic_copy_min_distance_nm: 1.0     # flag runs where protein heavy atoms come closer before unfolding
+  record_d_residues: true                # record only, not a gate
