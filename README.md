@@ -20,17 +20,16 @@ Given this scope, notebook-based orchestration was chosen for readability and ac
 
 ## Primary entry points
 
-
-| Workflow                | Location                   | Purpose                                                                                                                                      |
-| ----------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Workflow                | Location                     | Purpose                                                                                                                                                                              |
+| ----------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Statistical association | `statistical_association/` | Main notebooks for NCLE vs. structural-change association (protein- and residue-level) and NCLE/structural-change vs. abundance increase. See `statistical_association/README.md`. |
-| CG simulations          | `cg_sims/`                 | Temperature-quenching workflows at 300 K, MSM analyses, and visualization. See `cg_sims/README.md`.                                          |
-
+| CG simulations          | `cg_sims/`                 | Temperature-quenching workflows at 300 K, MSM analyses, and visualization. See `cg_sims/README.md`.                                                                                |
 
 ## Project layout
 
 - `statistical_association/`: Association analyses, datasets, and notebooks
 - `cg_sims/`: CG simulation inputs, scripts, and analysis workflows
+- `GDI1/`: GDI1 hydrophobic analysis (notebooks and outputs) and Arrhenius simulation/analysis scripts
 - `bioenv.yml`: Conda environment specification
 
 ## Data overview
@@ -39,21 +38,19 @@ This project uses two primary input datasets for the association analyses.
 
 ### Input data (raw data)
 
-
-| Data              | Original source                                                                                   |
-| ----------------- | ------------------------------------------------------------------------------------------------- |
+| Data              | Original source                                                                                |
+| ----------------- | ---------------------------------------------------------------------------------------------- |
 | LiP-MS data       | [Molecular Cell dataset](https://linkinghub.elsevier.com/retrieve/pii/S1097276523006512)          |
 | Entanglement data | [JMB dataset](https://www.sciencedirect.com/science/article/abs/pii/S0022283624000251?via%3Dihub) |
-
 
 ### Processed data (used in notebooks)
 
 The above inputs are integrated into two processed datasets in `statistical_association/data/`:
 
-| File | Proteins | Used by | Contents |
-| --- | --- | --- | --- |
-| `SC_Ent_no_transmembrane_secretory.pkl` | 1,887 | `1_0_*`, `1_1_*` | Merged LiP-MS and entanglement data, with transmembrane and secretory proteins excluded. |
-| `SC_ENT_ABD.xlsx` | 1,776 | `2_NCLE_ASC_abundance_3_models.ipynb` | Per-protein NCLE status, structural-change status, standardized length, and abundance-increase status. Subset of the 1,887 proteins above with abundance measurements. |
+| File                                      | Proteins | Used by                                 | Contents                                                                                                                                                               |
+| ----------------------------------------- | -------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SC_Ent_no_transmembrane_secretory.pkl` | 1,887    | `1_0_*`, `1_1_*`                    | Merged LiP-MS and entanglement data, with transmembrane and secretory proteins excluded.                                                                               |
+| `SC_ENT_ABD.xlsx`                       | 1,776    | `2_NCLE_ASC_abundance_3_models.ipynb` | Per-protein NCLE status, structural-change status, standardized length, and abundance-increase status. Subset of the 1,887 proteins above with abundance measurements. |
 
 `SC_Ent_no_transmembrane_secretory.pkl` combines:
 
@@ -96,12 +93,12 @@ mamba env create -f bioenv.yml
 conda activate bioenv
 ```
 
-Note: Installing `mamba` in `base` only adds the `mamba` command.  
+Note: Installing `mamba` in `base` only adds the `mamba` command.
 Project dependencies are still installed in a separate environment (`bioenv`), not in `base`.
 
 #### Option B: Conda only (no mamba)
 
-Caution: Conda's dependency solver can be very slow for large environments.  
+Caution: Conda's dependency solver can be very slow for large environments.
 If solving takes too long, use Option A (`mamba`) for significantly faster environment creation.
 
 ```bash
@@ -117,7 +114,7 @@ python --version
 
 ## Reproducing results
 
-All statistical analyses and figure-generation workflows are executed primarily in **Jupyter Notebook** (`.ipynb`) files.  
+All statistical analyses and figure-generation workflows are executed primarily in **Jupyter Notebook** (`.ipynb`) files.
 To reproduce results as documented, Jupyter is required.
 
 ### Jupyter quick start (for non-expert users)
@@ -140,13 +137,11 @@ Notebook location: `statistical_association/notebook/`
 
 Run the following notebooks:
 
-
-| Notebook                              | Required input                                                   |
-| ------------------------------------- | ---------------------------------------------------------------- |
+| Notebook                                | Required input                                                         |
+| --------------------------------------- | ---------------------------------------------------------------------- |
 | `1_0_SC_Ent_Protein_level.ipynb`      | `statistical_association/data/SC_Ent_no_transmembrane_secretory.pkl` |
 | `1_1_SC_Ent_Residue_level.ipynb`      | `statistical_association/data/SC_Ent_no_transmembrane_secretory.pkl` |
-| `2_NCLE_ASC_abundance_3_models.ipynb` | `statistical_association/data/SC_ENT_ABD.xlsx`                   |
-
+| `2_NCLE_ASC_abundance_3_models.ipynb` | `statistical_association/data/SC_ENT_ABD.xlsx`                       |
 
 ### CG simulations
 
@@ -154,28 +149,38 @@ Workflow location: `cg_sims/`
 
 - Temperature quenching at 300 K: follow the workflow in `cg_sims/README.md`.
 
+### GDI1
+
+Workflow location: `GDI1/`
+
+This folder contains the analyses of GDI1 conformational states. The simulation trajectories are not distributed with this repository because of their size.
+
+- `GDI1/hydrophobic_surfaces/`: Hydrophobic analysis. Only the notebooks and their outputs (figures, tables, and reports in each `outputs/` folder) are included:
+
+  - `hydrophobic_surface/hydrophobic_sasa_by_state.ipynb`: hydrophobic solvent-accessible surface area by state
+  - `aggregation_propensity/aggregation_propensity.ipynb`: aggregation propensity by state
+
+  Re-running these notebooks requires the actual simulation data, which are not included. The saved outputs are provided so that the results can be inspected without re-running.
+- `GDI1/arrhenius_GDI1/`: Arrhenius analysis. This folder includes only the scripts to run the all-atom temperature jump simulations (`scripts/`) and to analyze the resulting data (`scripts/analysis/`), together with the configuration and starting structures they need (`config/`, `inputs/`, `initial_structure/`). No simulation output or analysis results are included.
+
 ### Figures and tables
 
 Main figures and Tables (results) are generated using following notebooks:
 
 Figures are saved in PDF, PNG (300 dpi), and SVG formats.
 
-
-| Source                   | Notebook                                                                                                                           | Output location                         |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
-| Statistical association  | `1_0_SC_Ent_Protein_level.ipynb` and `1_1_SC_Ent_Residue_level.ipynb` | `statistical_association/notebook/figs` |
-| Abundance models (supplementary table) | `2_NCLE_ASC_abundance_3_models.ipynb` | Printed in notebook output (no files written) |
-| CG misfolding propensity | `Plot_misfolding_propensity_Nature_style.ipynb`                                                                                    | `cg_sims/plot_misfolding_probability/`  |
-
+| Source                                 | Notebook                                                                  | Output location                               |
+| -------------------------------------- | ------------------------------------------------------------------------- | --------------------------------------------- |
+| Statistical association                | `1_0_SC_Ent_Protein_level.ipynb` and `1_1_SC_Ent_Residue_level.ipynb` | `statistical_association/notebook/figs`     |
+| Abundance models (supplementary table) | `2_NCLE_ASC_abundance_3_models.ipynb`                                   | Printed in notebook output (no files written) |
+| CG misfolding propensity               | `Plot_misfolding_propensity_Nature_style.ipynb`                         | `cg_sims/plot_misfolding_probability/`      |
 
 ## Computational requirements
-
 
 | Component                                   | Storage                     | CPUs                                        | RAM   | GPUs     | Runtime                                                                                         |
 | ------------------------------------------- | --------------------------- | ------------------------------------------- | ----- | -------- | ----------------------------------------------------------------------------------------------- |
 | Statistical association (Jupyter notebooks) | Minimal                     | 1 core                                      | 8 GB  | None     | Negligible (few seconds)                                                                        |
 | CG simulations                              | Depends on trajectory count | 1 core (CPU-only) or 1 CPU + 1 GPU (faster) | 8 GB+ | Optional | ~~3 h for short proteins (~~100 residues, 1.5 us) to ~~1 day for long proteins (~~800 residues) |
-
 
 Statistical association analyses run on modest hardware (for example, a laptop with 8 GB RAM and 1 CPU core). CG simulations can run on CPU only and benefit from optional GPU acceleration.
 
@@ -200,7 +205,7 @@ If you use these datasets in your work, please cite:
 
 ## License
 
-This project is licensed under the GNU General Public License v3.0 (GPL-3.0).  
+This project is licensed under the GNU General Public License v3.0 (GPL-3.0).
 See the `LICENSE` file for the full license text.
 
 ## Attribution and funding
