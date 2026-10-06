@@ -29,7 +29,7 @@ Given this scope, notebook-based orchestration was chosen for readability and ac
 
 - `statistical_association/`: Association analyses, datasets, and notebooks
 - `cg_sims/`: CG simulation inputs, scripts, and analysis workflows
-- `GDI1/`: GDI1 hydrophobic analysis (notebooks and outputs) and Arrhenius simulation/analysis scripts
+- `GDI1/`: GDI1 hydrophobic analysis (outputs) and Arrhenius simulation/analysis scripts
 - `bioenv.yml`: Conda environment specification
 
 ## Data overview
@@ -155,12 +155,12 @@ Workflow location: `GDI1/`
 
 This folder contains the analyses of GDI1 conformational states. The simulation trajectories are not distributed with this repository because of their size.
 
-- `GDI1/hydrophobic_surfaces/`: Hydrophobic analysis. Only the notebooks and their outputs (figures, tables, and reports in each `outputs/` folder) are included:
+- `GDI1/hydrophobic_surfaces/`: Hydrophobic analysis. Only the saved outputs (figures, tables, and reports in each `outputs/` folder) are included:
 
-  - `hydrophobic_surface/hydrophobic_sasa_by_state.ipynb`: hydrophobic solvent-accessible surface area by state
-  - `aggregation_propensity/aggregation_propensity.ipynb`: aggregation propensity by state
+  - `hydrophobic_surface/outputs/`: hydrophobic solvent-accessible surface area by state
+  - `aggregation_propensity/outputs/`: aggregation propensity by state
 
-  Re-running these notebooks requires the actual simulation data, which are not included. The saved outputs are provided so that the results can be inspected without re-running.
+  The analysis notebooks are not included because they require the actual simulation data, which are not distributed.
 - `GDI1/arrhenius_GDI1/`: Arrhenius analysis. This folder includes only the scripts to run the all-atom temperature jump simulations (`scripts/`) and to analyze the resulting data (`scripts/analysis/`), together with the configuration and starting structures they need (`config/`, `inputs/`, `initial_structure/`). No simulation output or analysis results are included.
 
 ### Figures and tables
