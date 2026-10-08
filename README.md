@@ -1,11 +1,11 @@
-# Native entanglement misfolding contributes to age-associated structural changes across the *Saccharomyces cerevisiae* proteome
+# Non-covalent lasso entanglements are associated with age-related structural changes across the *Saccharomyces cerevisiae* proteome
 
 This repository evaluates the association between native non-covalent lasso entanglements (NCLEs) and age-associated structural changes in the yeast proteome. It includes:
 
 - Statistical association workflows (protein-level, residue-level, and logistic regression models linking NCLEs and age-associated structural changes to abundance increase)
 - Coarse-grained (CG) folding and misfolding simulation workflows
 - Figure-generation notebooks
-- A reproducible software environment (`bioenv.yml`)
+- A reproducible software environment (`bioenv.yml`, with a `Dockerfile` as an alternative)
 
 ## Design choices
 
@@ -31,6 +31,7 @@ Given this scope, notebook-based orchestration was chosen for readability and ac
 - `cg_sims/`: CG simulation inputs, scripts, and analysis workflows
 - `GDI1/`: GDI1 hydrophobic analysis (outputs) and Arrhenius simulation/analysis scripts
 - `bioenv.yml`: Conda environment specification
+- `Dockerfile`, `docker-compose.yml`: Docker image built from `bioenv.yml`
 
 ## Data overview
 
@@ -68,7 +69,7 @@ Filtering applied to both processed datasets:
 
 ### Prerequisites
 
-- [Conda or Miniconda](https://docs.conda.io/en/latest/miniconda.html)
+- [Conda or Miniconda](https://docs.conda.io/en/latest/miniconda.html), or [Docker](https://docs.docker.com/get-docker/) (see Option C)
 - Optional (recommended): [Mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html) for faster solving
 
 All required packages are listed in `bioenv.yml`.
@@ -106,7 +107,50 @@ conda env create -f bioenv.yml
 conda activate bioenv
 ```
 
-1. Verify the environment:
+#### Option C: Docker (no Conda installation needed)
+
+Prerequisite: [Docker](https://docs.docker.com/get-docker/) (Docker Desktop on macOS/Windows, Docker Engine on Linux).
+
+The `Dockerfile` builds an image containing exactly the packages pinned in `bioenv.yml`. The image holds only the software environment; the repository is mounted into the container at `/work`, so notebooks, data, and generated figures stay in your local clone.
+
+> **Important:** Run all `docker` commands below from the repository root (the folder that contains `Dockerfile` and `bioenv.yml`). The build needs both files, and `-v "$PWD":/work` mounts the current folder into the container, so running from another folder will fail or mount the wrong files.
+
+Enter the repository root, then build the image once (downloads ~1 GB of packages; the final image is ~7 GB):
+
+```bash
+cd entanglement_misfolding_and_aging   # repository root
+docker build -t entanglement-misfolding-aging .
+```
+
+Start Jupyter (also from the repository root):
+
+```bash
+docker run --rm -it -p 127.0.0.1:8888:8888 --user "$(id -u):$(id -g)" -v "$PWD":/work entanglement-misfolding-aging
+```
+
+Open the `http://127.0.0.1:8888/?token=...` URL printed in the terminal, then navigate to the notebooks as described in [Reproducing results](#reproducing-results). Stop the container with `Ctrl+C`.
+
+Equivalent with Docker Compose:
+
+```bash
+HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose up
+```
+
+To run a notebook or script without opening Jupyter, append the command, for example:
+
+```bash
+docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/work entanglement-misfolding-aging \
+  jupyter nbconvert --to notebook --execute --inplace statistical_association/notebook/1_0_SC_Ent_Protein_level.ipynb
+```
+
+Notes:
+
+- `--user "$(id -u):$(id -g)"` makes files written by the container belong to you. On Windows (PowerShell), omit `--user` and replace `"$PWD"` with `"${PWD}"`.
+- The image is `linux/amd64`. On Apple Silicon Macs it runs under emulation, which is fine for the notebooks but slow for simulations.
+- `cg_sims/scripts/` is already on `PATH` inside the container (needed for `GQ.py`).
+- CG simulations run on the CPU inside the container by default. To use an NVIDIA GPU, install the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) on a Linux host and add `--gpus all` to `docker run`. The SLURM submission scripts in `cg_sims/` are written for an HPC cluster and are not run through Docker; on clusters without Docker, the same image can be used with Apptainer/Singularity.
+
+3. Verify the environment (Options A and B):
 
 ```bash
 python --version
@@ -119,7 +163,7 @@ To reproduce results as documented, Jupyter is required.
 
 ### Jupyter quick start (for non-expert users)
 
-After activating `bioenv`, launch Jupyter from the notebook directory (`statistical_association/notebook/`), and run notebook cells top-to-bottom (`Run All`):
+After activating `bioenv` (or starting the Docker container, which launches Jupyter for you), launch Jupyter from the notebook directory (`statistical_association/notebook/`), and run notebook cells top-to-bottom (`Run All`):
 
 ```bash
 jupyter notebook

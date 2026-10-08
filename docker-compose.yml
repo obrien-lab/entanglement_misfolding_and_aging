@@ -1,0 +1,12 @@
+services:
+  bioenv:
+    build: .
+    image: entanglement-misfolding-aging:latest
+    platform: linux/amd64
+    # Run as the host user so files written to the repository keep your ownership.
+    # On Linux, start with:  HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose up
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    ports:
+      - "127.0.0.1:8888:8888"
+    volumes:
+      - .:/work

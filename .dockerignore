@@ -1,0 +1,3 @@
+# Only bioenv.yml is needed to build the image; the repository is mounted at run time.
+*
+!bioenv.yml
